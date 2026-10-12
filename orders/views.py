@@ -11,6 +11,7 @@ from accounts.permissions import IsInstructor, IsStudent
 from courses.models import Course
 from .models import Order, OrderItem
 from .serializers import OrderSerializer
+from .tasks import send_order_confirmation_email
 
 
 class OrderListView(APIView):
@@ -49,7 +50,6 @@ class OrderCreateView(APIView):
             if course is None:
                 return Response({"detail": "Published course not found."}, status=404)
 
-            # The conditional update and F expression keep stock decrements atomic.
             updated = Course.objects.filter(pk=course.pk, inventory__gte=quantity).update(
                 inventory=F("inventory") - quantity
             )
@@ -67,6 +67,9 @@ class OrderCreateView(APIView):
                 course=course,
                 unit_price=course.price,
                 quantity=quantity,
+            )
+            transaction.on_commit(
+                lambda order_id=order.pk: send_order_confirmation_email.delay(order_id)
             )
 
         order = Order.objects.select_related("student").prefetch_related("items__course").get(pk=order.pk)

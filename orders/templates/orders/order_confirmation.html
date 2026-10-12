@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <body>
+    <h1>Thanks for your order, {{ order.student.get_full_name|default:order.student.username }}!</h1>
+    <p>Your order <strong>#{{ order.pk }}</strong> has been confirmed.</p>
+
+    <h2>Order summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Item</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Unit price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.course.title }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unit_price }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p><strong>Total: {{ order.total_amount }}</strong></p>
+    <p>Order date: {{ order.created_at }}</p>
+  </body>
+</html>

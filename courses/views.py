@@ -1,25 +1,46 @@
-from rest_framework import status
+from rest_framework import filters, status
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.views import APIView
 
 from accounts.permissions import IsInstructor
 from .models import Course
+from .filters import CourseFilterBackend
+from .pagination import CoursePageNumberPagination
 from .serializers import CourseSerializer
 
 
-class CourseListView(APIView):
+class CourseListView(ListAPIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request):
+    serializer_class = CourseSerializer
+    pagination_class = CoursePageNumberPagination
+    filter_backends = [
+        CourseFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["title"]
+    ordering_fields = ["price", "created_at"]
+    ordering = ["-created_at"]
+    
+    def get_queryset(self):
+        request = self.request
         courses = Course.objects.select_related("instructor")
         if request.user.role == "INSTRUCTOR":
             courses = courses.filter(instructor=request.user)
         else:
             courses = courses.published()
-        return Response(CourseSerializer(courses, many=True, context={"request": request}).data)
+        return courses
+
+    @method_decorator(cache_page(60))
+    @method_decorator(vary_on_headers("Authorization"))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class CourseDetailView(APIView):

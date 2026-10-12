@@ -31,13 +31,13 @@ urlpatterns = [
     path('api/createInstructor', CreateInstructorView.as_view(), name='create-instructor'),
     path('api/register', TokenLoginView.as_view(), name='token-login'),
     path('api/token/refresh', TokenRefreshView.as_view(), name='token-refresh'),
-    path('api/getcourses', CourseListView.as_view(), name='course-list'),
-    path('api/getCourse/<int:course_id>', CourseDetailView.as_view(), name='course-detail'),
+    path('api/getcourses/', CourseListView.as_view(), name='course-list'),
+    path('api/getCourse/<int:course_id>/', CourseDetailView.as_view(), name='course-detail'),
     path('api/createCourse', CourseCreateView.as_view(), name='course-create'),
-    path('api/orders', OrderListView.as_view(), name='order-list'),
-    path('api/createOrder', OrderCreateView.as_view(), name='order-create'),
-    path('api/order/<int:order_id>', OrderDetailView.as_view(), name='order-detail'),
-    path('api/getRevenue', RevenueReportView.as_view(), name='revenue-report'),
+    path('api/orders/', OrderListView.as_view(), name='order-list'),
+    path('api/createOrder/', OrderCreateView.as_view(), name='order-create'),
+    path('api/order/<int:order_id>/', OrderDetailView.as_view(), name='order-detail'),
+    path('api/getRevenue/', RevenueReportView.as_view(), name='revenue-report'),
 ]
 
 if settings.DEBUG:
