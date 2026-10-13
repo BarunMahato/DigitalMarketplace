@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import path
+from django.urls import path, include
 from accounts.views import CreateInstructorView, CreateUserView
 from accounts.token_views import TokenLoginView, TokenRefreshView
 from courses.views import CourseCreateView, CourseDetailView, CourseListView
@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/createOrder/', OrderCreateView.as_view(), name='order-create'),
     path('api/order/<int:order_id>/', OrderDetailView.as_view(), name='order-detail'),
     path('api/getRevenue/', RevenueReportView.as_view(), name='revenue-report'),
+    path('silk', include('silk.urls', namespace='silk')),
 ]
 
 if settings.DEBUG:

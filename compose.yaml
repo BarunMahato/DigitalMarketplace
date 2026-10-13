@@ -1,0 +1,71 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: marketplace_db
+      MYSQL_USER: marketplace
+      MYSQL_PASSWORD: marketplace_dev_password
+      MYSQL_ROOT_PASSWORD: root_dev_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DEBUG: "1"
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      DB_NAME: marketplace_db
+      DB_USER: marketplace
+      DB_PASSWORD: marketplace_dev_password
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: celery -A config worker --loglevel=info
+    environment:
+      DEBUG: "1"
+      DB_NAME: marketplace_db
+      DB_USER: marketplace
+      DB_PASSWORD: marketplace_dev_password
+      DB_HOST: db
+      DB_PORT: "3306"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  mysql_data:
+  redis_data:
+  media_data:
