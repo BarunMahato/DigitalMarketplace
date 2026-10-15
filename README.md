@@ -224,6 +224,8 @@ erDiagram
         string username "Unique"
         string email "Unique"
         string password "Hashed"
+        string first_name
+        string last_name
         string role "STUDENT | INSTRUCTOR"
         boolean is_active
         datetime date_joined
