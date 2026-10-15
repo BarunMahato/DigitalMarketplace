@@ -1,0 +1,350 @@
+{
+  "info": {
+    "name": "Digital Course & Asset Marketplace API",
+    "_postman_id": "c1f7a4e2-98ab-4950-8b1e-3a9d8e72c5a1",
+    "description": "Postman Collection for Digital Course & Asset Marketplace API built with Django 6, Django REST Framework, Celery, Redis, and MySQL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "studentAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "instructorAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Root & Health",
+      "item": [
+        {
+          "name": "API Root Index",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", ""]
+            },
+            "description": "Lists all available API routes and their methods."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication & Accounts",
+      "item": [
+        {
+          "name": "Register Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student_jane\",\n  \"email\": \"jane@example.com\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Doe\",\n  \"password\": \"SuperSecureP@ssw0rd!\",\n  \"bio\": \"Passionate software engineering student.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/createUser",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "createUser"]
+            },
+            "description": "Registers a new user with the STUDENT role and auto-generates a Profile."
+          }
+        },
+        {
+          "name": "Register Instructor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor_john\",\n  \"email\": \"john@example.com\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\",\n  \"password\": \"InstructorP@ssw0rd123!\",\n  \"bio\": \"Senior Cloud Architect & Django Mentor.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/createInstructor",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "createInstructor"]
+            },
+            "description": "Registers a new user with the INSTRUCTOR role and auto-generates a Profile."
+          }
+        },
+        {
+          "name": "Login (Obtain JWT Pair)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('instructorAccessToken', jsonData.access);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.refresh);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"instructor_john\",\n  \"password\": \"InstructorP@ssw0rd123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "register"]
+            },
+            "description": "Authenticates username/password and returns HMAC-SHA256 access and refresh tokens."
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('instructorAccessToken', jsonData.access);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/token/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "token", "refresh"]
+            },
+            "description": "Exchanges a valid refresh token for a newly signed access token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses & Digital Assets",
+      "item": [
+        {
+          "name": "Create Course Asset (Instructor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{instructorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Distributed Systems with Celery & Redis\",\n  \"description\": \"Comprehensive masterclass on asynchronous queuing, race-free concurrency, and caching architectures.\",\n  \"price\": \"49.99\",\n  \"status\": \"PUBLISHED\",\n  \"inventory\": 50\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/createCourse",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "createCourse"]
+            },
+            "description": "Creates a new course asset. Only accessible by authenticated INSTRUCTOR accounts. Enforces price > 0 and banner image <= 2MB."
+          }
+        },
+        {
+          "name": "List Courses (Cached, Filtered, Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/getcourses/?page=1&search=Systems&ordering=-price",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getcourses", ""],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "search",
+                  "value": "Systems",
+                  "description": "Search by title substring"
+                },
+                {
+                  "key": "ordering",
+                  "value": "-price",
+                  "description": "Order by price or created_at (ascending/descending)"
+                },
+                {
+                  "key": "status",
+                  "value": "PUBLISHED",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Returns courses matching query. For students, returns published courses. For instructors, returns their own authored courses. Response is cached in Redis for 60 seconds with Vary: Authorization."
+          }
+        },
+        {
+          "name": "Get Course Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/getCourse/1/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getCourse", "1", ""]
+            },
+            "description": "Retrieves detail view of a single course asset by ID using select_related('instructor') to avoid N+1 queries."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders & Checkout",
+      "item": [
+        {
+          "name": "Create Order / Purchase Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": 1,\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/createOrder/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "createOrder", ""]
+            },
+            "description": "Executes atomic transaction with row-level lock (select_for_update) and F() decrement. Triggers Celery confirmation email via on_commit hook."
+          }
+        },
+        {
+          "name": "List Student Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", ""]
+            },
+            "description": "Lists all past orders for the authenticated student using prefetch_related('items__course') to eliminate N+1 queries."
+          }
+        },
+        {
+          "name": "Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/1/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "1", ""]
+            },
+            "description": "Retrieves single order receipt and purchased course item list."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics & Reporting",
+      "item": [
+        {
+          "name": "Instructor Revenue & Purchase Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{instructorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/getRevenue/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "getRevenue", ""]
+            },
+            "description": "Aggregates overall gross revenue and purchase counts across all instructor courses, plus per-asset breakdown using annotate() and aggregate()."
+          }
+        }
+      ]
+    }
+  ]
+}
